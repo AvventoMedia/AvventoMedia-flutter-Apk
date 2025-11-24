@@ -29,12 +29,33 @@ ThemeData darkTheme = ThemeData(
         tertiaryContainer: Colors.grey.withOpacity(0.5),
     ),
     textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: Colors.orange,
-        selectionHandleColor: Colors.orange,
+        cursorColor: Colors.amber,
+        selectionHandleColor: Colors.amber,
     ),
     textTheme: const TextTheme(
         bodyMedium: TextStyle(
             color: Colors.white,
         ),
-    )
+    ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.amber, // Button background
+      foregroundColor: Colors.black, // Text color
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: Colors.amber, // Text color
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      side: const BorderSide(color: Colors.amber),
+      foregroundColor: Colors.amber,
+    ),
+  ),
 );

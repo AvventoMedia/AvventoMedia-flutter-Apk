@@ -6,12 +6,14 @@ class YouTubePlaylistItemModel {
   final String description;
   final String thumbnailUrl;
   final String channelTitle;
+  final String channelName;
   final String videoId;
   final String duration;
   final String views;
   final DateTime publishedAt;
   final String liveBroadcastContent;
   final String privacyStatus;
+  List<YouTubePlaylistItemModel> items = [];
 
   YouTubePlaylistItemModel({
     required this.id,
@@ -25,6 +27,7 @@ class YouTubePlaylistItemModel {
     required this.publishedAt,
     this.liveBroadcastContent = '',
     this.privacyStatus = '',
+    this.channelName = '',
   });
 
   factory YouTubePlaylistItemModel.fromJson(Map<String, dynamic> json) {
@@ -91,7 +94,6 @@ class YouTubePlaylistItemModel {
         publishedAt = DateTime.tryParse(info['publishedAt']) ?? DateTime.now();
       }
     }
-    print("docId: $docId, data: $data");
     return YouTubePlaylistItemModel(
       id: docId,
       videoId: info['id'] ?? '',
@@ -99,6 +101,7 @@ class YouTubePlaylistItemModel {
       description: info['description'] ?? '',
       thumbnailUrl: info['thumbnailUrl'] ?? '',
       channelTitle: info['channelTitle'] ?? '',
+      channelName: info['channelName'] ?? '',
       duration: info['duration'] ?? '',
       views: info['views'] ?? '',
       liveBroadcastContent: info['liveBroadcastContent'] ?? '',

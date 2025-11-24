@@ -30,7 +30,22 @@ ThemeData lightTheme = ThemeData(
     tertiaryContainer: Colors.grey[600]!.withOpacity(0.5),
   ),
   textSelectionTheme: const TextSelectionThemeData(
-    cursorColor: Colors.orange,
-    selectionHandleColor: Colors.orange,
+    cursorColor: Colors.amber,
+    selectionHandleColor: Colors.amber,
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.amber, // Button bg color
+      foregroundColor: Colors.black, // Text color
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: Colors.amber, // Text color
+    ),
   ),
 );
