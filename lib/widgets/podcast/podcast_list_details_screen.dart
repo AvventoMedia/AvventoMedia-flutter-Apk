@@ -1,12 +1,8 @@
-import 'package:avvento_media/components/utils.dart';
 import 'package:avvento_media/models/radiomodel/radio_podcast_model.dart';
 import 'package:avvento_media/widgets/common/loading_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_svg/svg.dart';
-
-import '../text/text_overlay_widget.dart';
 
 class PodcastListDetailsWidget extends StatefulWidget {
   final RadioPodcast radioPodcast;
@@ -21,74 +17,117 @@ class PodcastPlayerWidgetState extends State<PodcastListDetailsWidget> {
 
   @override
   Widget build(BuildContext context) {
-   return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0, left: 8.0,right: 8.0,top: 8),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child:SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: CachedNetworkImage(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.secondary.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.tertiaryContainer.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Podcast artwork
+          Expanded(
+            flex: 5,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(
                     imageUrl: widget.radioPodcast.art,
-                    httpHeaders:  {
+                    httpHeaders: {
                       'Authorization': 'Bearer $azuracastAPIKey',
                     },
                     fit: BoxFit.cover,
-                    width: Utils.calculateWidth(context, 0.44),
-                    height:  Utils.calculateHeight(context, 0.2),
-                    placeholder: (context, url) => Center(
-                      child: SizedBox(
-                          width:  Utils.calculateWidth(context, 0.3),
-                          height:  Utils.calculateWidth(context, 0.3),
-                          child: const LoadingWidget()
-                      ),
+                    placeholder: (context, url) => Container(
+                      color: colorScheme.secondary,
+                      child: const Center(child: LoadingWidget()),
                     ),
-                    errorWidget: (context, _, error) => Icon(
-                      Icons.error,
-                      color: Theme.of(context).colorScheme.error,
+                    errorWidget: (context, _, error) => Container(
+                      color: colorScheme.secondary,
+                      child: Icon(
+                        Icons.headphones_rounded,
+                        color: colorScheme.onSecondary,
+                        size: 40,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: Utils.calculateWidth(context,0.44),
-                      child: TextOverlay(
-                        label: widget.radioPodcast.title,
-                        maxLines: 1,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        fontSize: Utils.calculateWidth(context,0.042),
+                  // Subtle gradient overlay at the bottom of the image
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 40,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            colorScheme.secondary.withValues(alpha: 0.6),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icon/folder.svg',
-                          color:  Theme.of(context).colorScheme.onSecondaryContainer,
-                          width: 20,
-                          height: 20,
-                        ),
-                        TextOverlay(
-                          label: '${widget.radioPodcast.episodes.toString()} Episodes',
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ],
+                  ),
+                  
+                ],
+              ),
             ),
           ),
-        ),
+          // Podcast info section
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.radioPodcast.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.podcasts_rounded,
+                        size: 14,
+                        color: Colors.amber.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${widget.radioPodcast.episodes} Episodes',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
