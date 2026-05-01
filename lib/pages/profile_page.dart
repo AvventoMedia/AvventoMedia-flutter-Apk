@@ -1,10 +1,7 @@
-import 'package:avvento_media/widgets/text/text_overlay_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_constants.dart';
 import '../components/utils.dart';
@@ -12,6 +9,7 @@ import '../routes/routes.dart';
 import '../widgets/settings/app_creaters_widget.dart';
 import '../widgets/settings/app_version_widget.dart';
 import '../widgets/settings/custom_list_tile.dart';
+import '../widgets/settings/donate_bottom_sheet.dart';
 import '../widgets/text/label_place_holder.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -63,63 +61,94 @@ class ProfilePage extends StatelessWidget {
                   isSwitch: false,
                   onTap: () => Utils.share("${AppConstants.shareAppMessage} 📱, \n ${AppConstants.shareAppLink}"),
                 ),
-                const SizedBox(height: 12,),
+                const SizedBox(height: 35,),
+                // App Stores section
+                LabelPlaceHolder(title: AppConstants.appStores, color: Theme.of(context).colorScheme.onSecondaryContainer),
+                CustomListTile(
+                  label: AppConstants.playStore,
+                  leadingIcon: FontAwesomeIcons.googlePlay,
+                  isSwitch: false,
+                  onTap: () => Utils.openBrowserURL(url: AppConstants.shareAppLinkAndroid, inApp: true),
+                ),
+                CustomListTile(
+                  label: AppConstants.appStore,
+                  leadingIcon: FontAwesomeIcons.appStoreIos,
+                  isSwitch: false,
+                  onTap: () => Utils.openBrowserURL(url: AppConstants.shareAppLinkIOS, inApp: true),
+                ),
+                const SizedBox(height: 24,),
+                // Support section — highlighted banner
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.leftMain),
+                  child: GestureDetector(
+                    onTap: () => DonateBottomSheet.show(context),
                     child: Container(
-                      color: Theme.of(context).colorScheme.secondary,
                       width: double.infinity,
-                      height: Utils.calculateHeight(context, 0.21),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.amber.shade800.withValues(alpha: 0.35),
+                            Colors.red.shade900.withValues(alpha: 0.25),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.amber.withValues(alpha: 0.25),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.favorite_rounded,
+                              color: Colors.amber.shade400,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                TextOverlay(label: AppConstants.donateTitle,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  fontSize: Utils.calculateWidth(context,0.04),
-                                ),
-                                const Gap(10),
-                                TextOverlay(label: AppConstants.donateMessage,
-                                  color: Theme.of(context).colorScheme.onSecondary,
-                                  fontSize: Utils.calculateWidth(context,0.03),
-                                  maxLines: 3,
-                                ),
-                                const Gap(10),
-                                ElevatedButton.icon(
-                                  onPressed: () async {
-                                    final uri = Uri.parse(AppConstants.avventoJoinYtUrl);
-                                    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-                                      throw 'Could not launch ${AppConstants.avventoJoinYtUrl}';
-                                    }
-                                  },
-                                  icon: const Icon(Icons.card_giftcard, color: Colors.white),
-                                  label: TextOverlay(label: AppConstants.donateButton,
-                                    fontWeight: FontWeight.bold,
+                                Text(
+                                  AppConstants.donateTitle,
+                                  style: TextStyle(
                                     color: Theme.of(context).colorScheme.onPrimary,
-                                    fontSize: Utils.calculateWidth(context,0.04),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red.shade500,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Tap to see donation options',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSecondary,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      )
+                          Icon(
+                            CupertinoIcons.chevron_right,
+                            color: Colors.amber.shade400,
+                            size: 18,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12,),
+                const SizedBox(height: 35,),
                 // radio section
                 LabelPlaceHolder(title: AppConstants.radio, color: Theme.of(context).colorScheme.onSecondaryContainer),
                 CustomListTile(
@@ -169,12 +198,6 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(height: 35,),
                 // Social media section
                 LabelPlaceHolder(title: AppConstants.socialMedia, color: Theme.of(context).colorScheme.onSecondaryContainer),
-                CustomListTile(
-                  label: AppConstants.instagram,
-                  leadingIcon: FontAwesomeIcons.instagram,
-                  isSwitch: false,
-                  onTap: () => Utils.openBrowserURL(url: AppConstants.instagramWebsite, inApp: true),
-                ),
                 CustomListTile(
                   label: AppConstants.tiktok,
                   leadingIcon: FontAwesomeIcons.tiktok,

@@ -51,7 +51,9 @@ class _HightlightsDetailsWidget extends State<HightlightsDetailsWidget> {
 
     // Determine containerColor
     Color? containerColor;
-    containerColor = Colors.black38;
+    if (youtubeItem != null || youtubePlaylist != null) {
+      containerColor = Colors.black38;
+    }
     if (youtubeItem != null) {
       final isLive = youtubeItem.liveBroadcastContent == 'live';
       final isUpcoming = youtubeItem.liveBroadcastContent == 'upcoming';

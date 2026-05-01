@@ -44,6 +44,37 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+/android/.gradle/
+
+# iOS build artifacts
+ios/build/
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+**/DerivedData/
+**/XCBuildData/
+**/PIFCache/
+**/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+
+# Xcode
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+*.app
+
+# Generated files
+*.generated.dart
+*.g.dart
+*.freezed.dart
 
 # ignore to secure apikeys
 *.env

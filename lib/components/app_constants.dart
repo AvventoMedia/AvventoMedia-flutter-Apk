@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class AppConstants {
   static const String appName = "AvventoMedia";
   static const String radioName = "AvventoRadio";
@@ -50,19 +52,25 @@ class AppConstants {
   static const String general = "GENERAL";
   static const String prayerRequest = "Prayer Request";
   static const String avventoWebsiteTitle = "Visit AvventoMedia Website";
-  static const String avventoWebsite = "https://avventomedia.org/avvento/";
+  static const String avventoWebsite = "https://avventomedia.org";
   static const String avventoYoutubeChannel = "AvventoProductions";
   static const String avventoYoutubeChannelLink = "https://www.youtube.com/@AvventoProductions";
   static const String shareApp = "Share AvventoMedia App";
-  static const String shareAppLink = "https://play.google.com/store/apps/details?id=tv.avventomedia.app";
+  static const String shareAppLinkAndroid = "https://play.google.com/store/apps/details?id=tv.avventomedia.app";
+  static const String shareAppLinkIOS = "https://apps.apple.com/us/app/avventomedia/id6756179416";
+  static String get shareAppLink => Platform.isIOS ? shareAppLinkIOS : shareAppLinkAndroid;
   static const String shareAppMessage = "Experience the joy of uplifting gospel music and inspiring stories with the AvventoMedia app! Download now and let your heart sing!";
+
+  static const String appStores = "APP STORES";
+  static const String playStore = "Get it on Google Play";
+  static const String appStore = "Download on App Store";
 
   static const String radio = "RADIO";
   static const String webRadio = "Avvento Web Radio";
-  static const String webRadioUrl = "https://avventomedia.org/home/old/media/avventoradio/";
+  static const String webRadioUrl = "https://avventomedia.org/avventoradio";
 
   static const String radioSchedule = "AvventoRadio Schedule";
-  static const String radioScheduleUrl = "https://avventomedia.org/avventoradio-schedule/";
+  static const String radioScheduleUrl = "https://radio1.avventomedia.org/public/avventoradio/schedule";
 
   static const String podcastBroadcasts = "Podcasts Website";
   static const String podcastBroadcastsUrl = "https://radio1.avventomedia.org/public/1/podcasts";
@@ -80,8 +88,6 @@ class AppConstants {
   static const String darkMode = "Dark Mode";
 
   static const String socialMedia = "SOCIAL MEDIA";
-  static const String instagram = "Follow us on Instagram";
-  static const String instagramWebsite = "https://www.instagram.com/avventomedia_official/";
   static const String tiktok = "Follow us on Tiktok";
   static const String tiktokWebsite = "https://www.tiktok.com/@avventomedia_official";
   static const String facebook = "Like us on Facebook";

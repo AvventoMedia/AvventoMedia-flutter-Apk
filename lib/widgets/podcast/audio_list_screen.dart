@@ -1,5 +1,4 @@
 import 'package:avvento_media/components/app_constants.dart';
-import 'package:avvento_media/components/utils.dart';
 import 'package:avvento_media/widgets/text/label_place_holder.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -30,43 +29,66 @@ class _AudioListState extends State<AudioListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8.0),
-      width:  Utils.calculateWidth(context, 0.95),
-      height: Utils.calculateHeight(context, 0.42),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          LabelPlaceHolder(title: AppConstants.podcasts, moreIcon: true, onMoreTap: () => Get.toNamed(Routes.getPodcastListRoute())),
-          Padding(
-            padding: const EdgeInsets.only(left: AppConstants.leftMain, right: AppConstants.rightMain),
-            child: Divider(color: Theme.of(context).colorScheme.tertiaryContainer,),
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        LabelPlaceHolder(
+          title: AppConstants.podcasts,
+          moreIcon: true,
+          onMoreTap: () => Get.toNamed(Routes.getPodcastListRoute()),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppConstants.leftMain,
+            right: AppConstants.rightMain,
           ),
-          Expanded(child: buildListView(context)),
-        ],
-      ),
+          child: Divider(
+            color: Theme.of(context).colorScheme.tertiaryContainer,
+          ),
+        ),
+        const SizedBox(height: 4),
+        _buildGridView(context),
+      ],
     );
   }
 
-  Widget buildListView(BuildContext context) {
+  Widget _buildGridView(BuildContext context) {
     return Consumer<RadioPodcastProvider>(
       builder: (context, podcastProvider, child) {
         if (podcastProvider.podcasts.isEmpty) {
-          return const LoadingWidget();
+          return const SizedBox(
+            height: 200,
+            child: LoadingWidget(),
+          );
         } else {
-          return ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: podcastProvider.podcasts.length,
-            itemBuilder: (BuildContext context, int index) {
-              return buildRadioPodcastDetailsScreen(podcastProvider.podcasts[index]);
-            },
+          // Take only the 4 most recent podcasts for the 2x2 grid
+          final recentPodcasts = podcastProvider.podcasts.take(4).toList();
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.leftMain,
+            ),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.78,
+              ),
+              itemCount: recentPodcasts.length,
+              itemBuilder: (BuildContext context, int index) {
+                return _buildPodcastCard(recentPodcasts[index]);
+              },
+            ),
           );
         }
       },
     );
   }
 
-  Widget buildRadioPodcastDetailsScreen(RadioPodcast radioPodcast) {
+  Widget _buildPodcastCard(RadioPodcast radioPodcast) {
     return GestureDetector(
       onTap: () {
         // Set the selected episode using the controller
@@ -74,7 +96,7 @@ class _AudioListState extends State<AudioListScreen> {
         // Navigate to the "PodcastPage"
         Get.toNamed(Routes.getPodcastEpisodeListRoute());
       },
-      child: PodcastListDetailsWidget(radioPodcast: radioPodcast,),
+      child: PodcastListDetailsWidget(radioPodcast: radioPodcast),
     );
   }
 
