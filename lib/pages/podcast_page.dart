@@ -46,6 +46,11 @@ class PodcastPageState extends State<PodcastPage> {
   void initState() {
     super.initState();
     _audioPlayerController = Get.find<AudioPlayerController>();
+    // Defer reactive updates to after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _audioPlayerController.isLive.value = false;
+      _audioPlayerController.hideMiniPlayer(); // Hide on player page
+    });
     // Check if the selected episode is different from the current media item
     final selectedEpisode = episodeController.selectedEpisode.value!;
     // Check if the selected episode is different from the current media item

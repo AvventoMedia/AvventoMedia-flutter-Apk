@@ -43,6 +43,11 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
     super.initState();
     radioStationProvider = Provider.of<RadioStationProvider>(context, listen: false);
     _audioPlayerController = Get.find<AudioPlayerController>();
+    // Defer reactive updates to after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _audioPlayerController.isLive.value = true;
+      _audioPlayerController.hideMiniPlayer(); // Hide on player page
+    });
   }
 
   @override

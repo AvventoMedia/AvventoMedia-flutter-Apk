@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
 
 import 'bindings/initial_binding.dart';
+import 'widgets/audio_players/mini_player_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,6 +107,16 @@ class MyApp extends StatelessWidget {
           initialRoute: Routes.getHomeRoute(), // Set the initial route to '/'
           getPages: Routes.routes,
           initialBinding: InitialBinding(),
+          builder: (context, child) {
+            return Stack(
+              children: [
+                // The actual page content
+                child ?? const SizedBox.shrink(),
+                // Floating mini player
+                const MiniPlayerWidget(),
+              ],
+            );
+          },
         ),
       ),
     );
