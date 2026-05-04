@@ -54,9 +54,9 @@ class _NavBarState extends State<NavBar> {
           elevation: 0,
           //Bottom Navigation Bar with [Home,Listen,Profile]
           items: const [
-            BottomNavigationBarItem(label: "Home",icon: Icon(CupertinoIcons.house_alt)),
-            BottomNavigationBarItem(label: "Listen",icon: Icon(CupertinoIcons.headphones)),
-            BottomNavigationBarItem(label: "Profile",icon: Icon(CupertinoIcons.person)),
+            BottomNavigationBarItem(label: "Videos",icon: Icon(CupertinoIcons.play_circle)),
+            BottomNavigationBarItem(label: "Audio",icon: Icon(CupertinoIcons.headphones)),
+            BottomNavigationBarItem(label: "More",icon: Icon(CupertinoIcons.person_crop_circle)),
           ],
           ),
         ),

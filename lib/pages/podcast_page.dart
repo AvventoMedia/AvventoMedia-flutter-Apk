@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:rxdart/rxdart.dart' as r_x;
 
@@ -46,6 +47,11 @@ class PodcastPageState extends State<PodcastPage> {
   void initState() {
     super.initState();
     _audioPlayerController = Get.find<AudioPlayerController>();
+    // Defer reactive updates to after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _audioPlayerController.isLive.value = false;
+      _audioPlayerController.hideMiniPlayer(); // Hide on player page
+    });
     // Check if the selected episode is different from the current media item
     final selectedEpisode = episodeController.selectedEpisode.value!;
     // Check if the selected episode is different from the current media item
@@ -66,12 +72,124 @@ class PodcastPageState extends State<PodcastPage> {
 
   @override
   void dispose() {
-    if (!_audioPlayerController.audioPlayer.playerState.playing) {
-      _musicPlayerPositionStream.drain(); // Dispose of the stream
-      _audioPlayerController.dispose();
-      _musicPlayerPositionController.close();
-    }
+    _audioPlayerController.showMiniPlayer();
+    _musicPlayerPositionController.close();
     super.dispose();
+  }
+
+  void _showQueueBottomSheet(BuildContext context, AudioPlayerController audioPlayerController) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return StreamBuilder<SequenceState?>(
+              stream: audioPlayerController.audioPlayer.sequenceStateStream,
+              builder: (context, seqSnapshot) {
+                final state = seqSnapshot.data;
+                if (state?.sequence.isEmpty ?? true) {
+                  return const Center(child: Text("Queue is empty"));
+                }
+                
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.queue_music_rounded, size: 24),
+                          const SizedBox(width: 10),
+                          Text(
+                            "Up Next",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ReorderableListView.builder(
+                        scrollController: scrollController,
+                        buildDefaultDragHandles: false,
+                        itemCount: state!.sequence.length,
+                        onReorder: (int oldIndex, int newIndex) {
+                          audioPlayerController.moveQueueItem(oldIndex, newIndex);
+                        },
+                        itemBuilder: (context, index) {
+                          final source = state.sequence[index];
+                          final mediaItem = source.tag as MediaItem;
+                          final isPlaying = index == state.currentIndex;
+                          
+                          return ListTile(
+                            key: ValueKey(mediaItem.id),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: CachedNetworkImage(
+                                imageUrl: mediaItem.artUri.toString(),
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, _, error) => const Icon(Icons.error),
+                              ),
+                            ),
+                            title: Text(
+                              mediaItem.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isPlaying ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
+                                fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                            subtitle: Text(
+                              mediaItem.artist ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSecondary),
+                            ),
+                            trailing: ReorderableDragStartListener(
+                              index: index,
+                              child: const Icon(Icons.drag_handle, color: Colors.grey),
+                            ),
+                            onTap: () {
+                              audioPlayerController.audioPlayer.seek(Duration.zero, index: index);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -221,22 +339,29 @@ class PodcastPageState extends State<PodcastPage> {
                           ),
                           SizedBox(height: Utils.calculateHeight(context, 0.02)),
                           Controls(audioPlayerController: _audioPlayerController,),
-                          SizedBox(height: Utils.calculateHeight(context, 0.08),),
-                          TextOverlay(label: AppConstants.avventoSlogan,color: Theme.of(context).colorScheme.onSecondaryContainer),
+                          SizedBox(height: Utils.calculateHeight(context, 0.04),),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SpeedControl(audioPlayerController: _audioPlayerController),
+                              const SizedBox(width: 40),
+                              IconButton(
+                                icon: const Icon(Icons.queue_music_rounded),
+                                color: Theme.of(context).colorScheme.onSecondary,
+                                iconSize: 28,
+                                onPressed: () {
+                                  _showQueueBottomSheet(context, _audioPlayerController);
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: Utils.calculateHeight(context, 0.04),),
+                          TextOverlay(label: AppConstants.avventoSlogan, color: Theme.of(context).colorScheme.onSecondaryContainer),
                           SizedBox(height: Utils.calculateHeight(context, 0.02),),
                         ],
                       );
                     },
                   ),
-                ],
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Row(
-                children: [SpeedControl(audioPlayerController: _audioPlayerController,),
                 ],
               ),
             ),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
-import '../../components/utils.dart';
 import '../../controller/podcast_controller.dart';
 import '../../routes/routes.dart';
 import '../common/loading_widget.dart';
@@ -37,18 +36,23 @@ class _PodcastListState extends State<PodcastListScreen> {
         if (podcastProvider.podcasts.isEmpty) {
           return const LoadingWidget();
         } else {
-          return GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: Utils.calculateHeight(context, 0.0009),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16.0,
+                mainAxisSpacing: 16.0,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: podcastProvider.podcasts.length,
+              semanticChildCount: 2,
+              itemBuilder: (BuildContext context, int index) {
+                return buildRadioPodcastDetailsScreen(podcastProvider.podcasts[index]);
+              },
             ),
-            itemCount: podcastProvider.podcasts.length,
-            semanticChildCount: 2,
-            itemBuilder: (BuildContext context, int index) {
-              return  buildRadioPodcastDetailsScreen(podcastProvider.podcasts[index]);
-            },
           );
         }
       },
