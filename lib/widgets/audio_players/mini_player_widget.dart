@@ -258,7 +258,7 @@ class MiniPlayerWidget extends StatelessWidget {
 
                     // Close (dismiss) button
                     GestureDetector(
-                      onTap: () => controller.hideMiniPlayer(),
+                      onTap: () => controller.closeMiniPlayer(),
                       child: Container(
                         width: 26,
                         height: 26,

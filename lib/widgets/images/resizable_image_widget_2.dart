@@ -53,15 +53,17 @@ class ResizableImageContainerWithOverlay extends StatelessWidget {
                     color: Colors.white,
                     size: 20,
                   ),
-                  const SizedBox(width: 4.0),
-                  Text(
-                    text!,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: textFontSize,
+                  if (text != null) ...[
+                    const SizedBox(width: 4.0),
+                    Text(
+                      text!,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: textFontSize,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               )
                   : svgPath != null
@@ -73,23 +75,25 @@ class ResizableImageContainerWithOverlay extends StatelessWidget {
                     width: 20,
                     height: 20,
                   ),
-                  const SizedBox(width: 8.0),
-                  Text(
-                    text!,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: textFontSize!,
+                  if (text != null) ...[
+                    const SizedBox(width: 8.0),
+                    Text(
+                      text!,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: textFontSize!,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               )
-                  : Text(
+                  : text != null ? Text(
                 text!,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: textFontSize!,
                 ),
-              ),
+              ) : const SizedBox.shrink(),
             ),
           ),
         ),
@@ -97,7 +101,13 @@ class ResizableImageContainerWithOverlay extends StatelessWidget {
     );
   }
 
-  Widget imageContainer() {
+  Widget imageContainer(BuildContext context) {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: Icon(Icons.image_not_supported, color: Theme.of(context).colorScheme.onSurface),
+      );
+    }
     return CachedNetworkImage(
       imageUrl: imageUrl!,
       httpHeaders: token != null ? {
@@ -113,11 +123,35 @@ class ResizableImageContainerWithOverlay extends StatelessWidget {
             child: LoadingWidget()
         ),
       ),
-    errorWidget: (context, _, error) => Icon(
-      Icons.error,
-      color: Theme.of(context).colorScheme.error,
-    ),
-  );
+      errorWidget: (context, url, error) {
+        if (url.contains('maxresdefault')) {
+          return CachedNetworkImage(
+            imageUrl: url.replaceAll('maxresdefault', 'hqdefault'),
+            httpHeaders: token != null ? {
+              'Authorization': 'Bearer $token',
+            } : null ,
+            fit: text != null || containerColor != null ? BoxFit.cover : BoxFit.fitWidth,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) => const Center(
+              child: SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: LoadingWidget()
+              ),
+            ),
+            errorWidget: (context, url, error) => Icon(
+              Icons.error,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+        return Icon(
+          Icons.error,
+          color: Theme.of(context).colorScheme.error,
+        );
+      },
+    );
   }
   @override
   Widget build(BuildContext context) {
@@ -130,10 +164,10 @@ class ResizableImageContainerWithOverlay extends StatelessWidget {
           aspectRatio: 16 / 9,
           child: Stack(
             children: [
-              text != null || containerColor != null ? imageContainer() :
+              text != null || containerColor != null ? imageContainer(context) :
               InstaImageViewer(
                   backgroundColor:  Theme.of(context).colorScheme.surface,
-                  child: imageContainer()
+                  child: imageContainer(context)
               ),
               icon != null || text != null || svgPath != null ? buildOverlay(): Container()
             ],

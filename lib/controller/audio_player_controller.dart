@@ -47,6 +47,16 @@ class AudioPlayerController extends GetxController {
     await audioPlayer.pause();
   }
 
+  Future<void> stop() async {
+    await audioPlayer.stop();
+  }
+
+  /// Stop audio and completely hide the mini player globally
+  Future<void> closeMiniPlayer() async {
+    await audioPlayer.stop();
+    isPlayerActive.value = false;
+  }
+
   /// Hide mini player on the current page
   void hideMiniPlayer() => isMiniPlayerVisible.value = false;
 
