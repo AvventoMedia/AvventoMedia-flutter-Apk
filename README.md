@@ -1,184 +1,104 @@
 ![AvventoMedia Banner](https://avventomedia.org/wp-content/uploads/2023/10/avventoMediaAppAdvert.png)
+
 # AvventoMedia App
 
-### AvventoMedia is Flying the Gospel to the Whole World
+### Flying the Gospel to the Whole World
 
 AvventoMedia is dedicated to spreading the gospel globally. Its content is branded as AvventoProductions on various platforms including YouTube, Facebook, SoundCloud, and Mixcloud. Additionally, it can be accessed on AvventoRadio at [radio.avventomedia.org](https://radio.avventomedia.org) and on free-to-air 3ABN Uganda Television.
 
+---
 
-## 📱 Screenshots
-|  <div style="flex: 1 1 100%; margin: 10px;"><img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240522-072911.png" alt="Home Screen" style="width: 100%;"></div>|  <div style="flex: 1 1 100%; margin: 10px;"><img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240529-084446.png" alt="Listen Screen" style="width: 100%;"></div>|<div style="flex: 1 1 100%; margin: 10px;"> <img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240529-091338.png" alt="Dark mode Screen" style="width: 100%;"></div>|
-|-|-|-|
+## 📱 Features
 
-|  <div style="flex: 1 1 100%; margin: 10px;"> <img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240529-091405.png" alt="Selected Podcast Screen" style="width: 100%;">|  <div style="flex: 1 1 100%; margin: 10px;"> <img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240522-073053.png" alt="Podcast listen Screen" style="width: 100%;"></div>|<div style="flex: 1 1 100%; margin: 10px;"> <img src="https://avventomedia.org/wp-content/uploads/2024/05/Screenshot_20240522-072937.png" alt="Tv screen" style="width: 100%;"></div>|
-|-|-|-|
-
-## Features
-
-#### AvventoRadio
- Listen to uplifting music and sermons 24/7.
-
-#### AvventoMedia and 3ABN Streaming TV Sections
- Access various live programs, shows, and music from Avventomedia and 3ABN Uganda Television.
-
-#### AvventoRadio Updates
-Stay informed with the latest updates and releases from AvventoRadio.
-
-#### Podcasts
-Listen to wonderful Podcasts from AvventoRadio
-
-## Get the App
-
-You can download the AvventoMedia app from the Play Store [here](https://play.google.com/store/apps/details?id=tv.avventomedia.app).
-
-## Changelogs
-### Version 1.1.0 (April 2025)
-- Refactoring explore to Carousel design | UI re-design
+- **AvventoRadio**: Listen to uplifting music, sermons, and live broadcasts 24/7.
+- **Streaming TV**: Access live programs, shows, and music from AvventoMedia and 3ABN Uganda Television.
+- **Podcasts & Audio Player**: Premium background-capable audio player with dynamic queues, drag-and-drop reordering, and speed controls.
+- **YouTube Integration (Kids, Music, Main)**: Watch high-quality video content synced directly from the AvventoProductions YouTube channels.
+- **Global Search**: Instantly search across Playlists, Videos, Live TV, and Radio with persistent local search history and fluid inline filters.
 
 ---
 
-### Version 0.9.2 (December 2024)
-- new redesign of share button
+## 🏗 Infrastructure & Tech Stack
+
+This project is built with modern, scalable architecture to ensure a seamless media streaming experience.
+
+```mermaid
+graph TD
+    Client[📱 AvventoMedia App<br>Flutter]
+
+    subgraph Firebase
+        Firestore[(Cloud Firestore)]
+        FCM[Cloud Messaging]
+    end
+
+    subgraph APIs & Servers
+        YT[YouTube API v3]
+        Radio[AvventoRadio / Azuracast]
+        Cache[🖥 avvento-cache-server<br>Node.js]
+    end
+
+    Client -->|Fetches Cached Data| Firestore
+    Client -->|Streams Live Audio| Radio
+    Client -->|Receives Alerts| FCM
+    Cache -->|Fetches Videos| YT
+    Cache -->|Caches to| Firestore
+```
+
+- **Frontend**: Flutter & Dart (Cross-platform iOS and Android)
+- **State Management**: GetX & Provider
+- **Audio/Video Playback**: `just_audio` (with background play support), `better_player`, and `youtube_player_flutter`.
+- **Backend & Database**: Firebase Cloud Firestore.
+- **Content Synchronization**: A custom Node.js `avvento-cache-server` syncs YouTube API data to Firestore to prevent API quota limits and ensure fast load times.
+- **Push Notifications**: OneSignal
 
 ---
 
-### Version 0.9.0 -> 0.9.1 (October 2024)
-- new redesign of youtube items
-- 0.9.1_removed yt caching
+## 🚀 CI/CD & Deployment
+
+This repository uses **GitHub Actions** for professional Continuous Integration and Continuous Deployment (CI/CD). 
+
+Deployments are triggered **manually** via the GitHub Actions `workflow_dispatch`.
+
+### Automated Pipeline Capabilities:
+1. **Android Deployment**: Decodes Keystores on-the-fly, builds the signed `.aab`, and uploads directly to the Google Play Console internal/production tracks.
+2. **iOS Deployment**: Sets up macOS keychains, decodes `.p12` certificates and provisioning profiles, builds the signed `.ipa`, and uploads directly to App Store Connect (TestFlight) using `altool`.
+
+*(Note: Never commit your Keystores or Certificates. They must be stored as Base64 strings in your GitHub Repository Secrets).*
 
 ---
 
-### Version 0.8.0 (September 2024)
-- fixed android 14 and android 15
-- new redesign of youtube items
-- Upgraded packages
+## 🛠 Getting Started (Local Setup)
+
+To run this project locally, you will need the following prerequisites:
+
+1. **Flutter SDK**: `>=3.1.2 <4.0.0`
+2. **Firebase Config**: You must obtain the `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from your Firebase Console and place them in their respective app directories.
+3. **Environment Variables**: Create a `.env` file in the root directory for any sensitive local API keys.
+4. **Run the App**:
+   ```bash
+   flutter pub get
+   flutter run
+   ```
 
 ---
 
-### Version 0.7.0 (August 2024)
-- Added AvventoProductions Youtube
-- Updated to more nice and new looking UI
-- Improved functionality
+## 📥 Get the App
+
+Download the AvventoMedia app today:
+- [Google Play Store](https://play.google.com/store/apps/details?id=tv.avventomedia.app)
+- [Apple App Store](https://apps.apple.com/us/app/avventomedia/id6756179416)
 
 ---
 
-### Version 0.6.3 (August 2024)
-- show youtube views
+## 📝 Recent Changelog
 
----
+### Version 1.4.0 (May 2026)
+- **Major UI Redesign**: Introduced premium frosted-glass cards, edge-to-edge thumbnails, and fluid animations.
+- **Queue & Speed Bottom Sheets**: Replaced the clunky podcast player layout with sleek modal bottom sheets.
+- **Search Overhaul**: Added persistent local search history and inline sub-category filtering chips.
+- **Playlist Continuity**: Fixed audio looping; the player now smoothly auto-plays the next item in the queue.
+- **CI/CD Integration**: Added professional GitHub Actions for automated store deployments.
 
-### Version 0.6.2 (August 2024)
-- Improved performance and fixed some bugs
-- able to show live and premiering youtube videos
-
----
-
-### Version 0.6.1 (July 2024)
-- Improved performance and fixed some bugs
-
----
-
-### Version 0.6.0 (July 2024)
-- Improved performance
-- Added videos and podcasts view in highlights section
-- View some posts images in fullscreen
-
----
-
-### Version 0.5.1 (July 2024)
-- Improved performance
-- fixed format time bug
-
----
-
-### Version 0.5.0 (June 2024)
-- Kids section Added
-- fixed bugs
-
----
-
-### Version 0.4.0 (June 2024)
-- Music section Added
-- Support svg icons
-- Support Youtube api for videos
-- More screens (Live tv list, music list)
-
----
-
-### Version 0.3.0 (June 2024)
-- Improved Podcasts displays
-- Added speed controls on playing podcast.
-- fixed some bugs
-
----
-
-### Version 0.2.0 (May 2024)
-- Improved Podcasts displays
-- Fetching podcasts from AvventoMedia Azuracast.
-- Added main Podcast Page and selected
-- Added Donate option by kofi now with Right message
-- Share App now included
-- Share selected Podcasts
-- Added ability to update on new Release from PlayStore | Apple store
-
----
-
-### Version 0.1.0 (March 2024)
-- Added AvventoRadio feature.
-- Included 3ABN streaming TV sections.
-- Implemented AvventoRadio updates.
-- Implemented AvventoRadio podcast programs | recorded (Spreaker)
-- Added Donate option by kofi
-- Added social media links
-- Added PrayerRequest section and feedback
-- Included AvventoMedia website links
-
----
-
-### Todos
-- [ ] Enhance search functionality.
-- [ ] Add Speakers | Presenters
-- [ ] support podcast download
-
-### Completed
-##### April 2025
-- [x] Refactoring explore to Carousel design | UI re-design
-
----
-
-##### September 2024
-- [x] fixed android 14 and android 15
-- [x] added upload time for youtube videos
-
-##### August 2024
-- [x] show views on videos
-- [x] Able to show live and premiering videos
-- [x] Added AvventoProductions youtube
-- [x] Refactor UI
-
-##### July 2024
-- [x] fixed format time bug
-- [x] View some posts images in fullscreen
-- [x] Added videos and podcasts view in highlights section
-
-##### June 2024
-- [x] Kids Section Added
-- [x] Music section Added
-- [x] Support svg icons
-- [x] Support Youtube api for videos
-- [x] More screens (Live tv list, music list)
-- [x] Improved podcast page
-- [x] Added speed controls on playing podcast
-- [x] fixed some bugs
-
-##### May 2024
-- [x] Improved user interface design.
-- [x] Added podcasts page
-- [x] Share app
-- [x] Added ability to update on new Release from PlayStore | Apple store
-
-##### March 2024
-- [x] Implemented initial app framework.
-- [x] Integrated AvventoRadio and 3ABN streaming.
-- [x] Released version 0.1.0 on the Play Store.
-- [x] Refactored to work on IOS devices
+### Version 1.3.0
+- Refactoring explore to Carousel design.
+- Complete UI/UX aesthetic upgrade.
