@@ -229,6 +229,20 @@ class MiniPlayerWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
 
+                    // Previous Button
+                    if (!isLive)
+                      GestureDetector(
+                        onTap: controller.hasPrevious.value ? controller.playPrevious : null,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: Icon(
+                            CupertinoIcons.backward_fill,
+                            color: controller.hasPrevious.value ? colorScheme.onPrimary : Colors.grey.withValues(alpha: 0.5),
+                            size: 20,
+                          ),
+                        ),
+                      ),
+
                     // Play/Pause button
                     GestureDetector(
                       onTap: () {
@@ -255,6 +269,20 @@ class MiniPlayerWidget extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+
+                    // Next Button
+                    if (!isLive)
+                      GestureDetector(
+                        onTap: controller.hasNext.value ? controller.playNext : null,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4.0, right: 8.0),
+                          child: Icon(
+                            CupertinoIcons.forward_fill,
+                            color: controller.hasNext.value ? colorScheme.onPrimary : Colors.grey.withValues(alpha: 0.5),
+                            size: 20,
+                          ),
+                        ),
+                      ),
 
                     // Close (dismiss) button
                     GestureDetector(

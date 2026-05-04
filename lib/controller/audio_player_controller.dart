@@ -5,8 +5,12 @@ import 'package:just_audio_background/just_audio_background.dart';
 
 class AudioPlayerController extends GetxController {
   late AudioPlayer audioPlayer;
-  late AudioSource audioSource;
+  AudioSource? audioSource;
+  ConcatenatingAudioSource? playlist;
   MediaItem? currentMediaItem;
+  
+  final RxBool hasNext = false.obs;
+  final RxBool hasPrevious = false.obs;
   List<double> speeds = [1.0, 1.25, 1.5, 1.75, 2.0];
   int currentSpeedIndex = 0;
 
@@ -23,6 +27,20 @@ class AudioPlayerController extends GetxController {
   void onInit() {
     super.onInit();
     audioPlayer = AudioPlayer();
+    audioPlayer.setLoopMode(LoopMode.off);
+    
+    // Listen to sequence state changes to dynamically update current item and next/prev availability
+    audioPlayer.sequenceStateStream.listen((sequenceState) {
+      if (sequenceState == null) return;
+      
+      final currentItem = sequenceState.currentSource?.tag as MediaItem?;
+      if (currentItem != null) {
+        currentMediaItem = currentItem;
+      }
+      
+      hasNext.value = audioPlayer.hasNext;
+      hasPrevious.value = audioPlayer.hasPrevious;
+    });
   }
 
   Future<void> setAudioSource(String url, MediaItem mediaItemTag) async {
@@ -32,11 +50,50 @@ class AudioPlayerController extends GetxController {
     );
 
     currentMediaItem = mediaItemTag;
-    // Defer reactive updates to avoid triggering Obx during build phase
+    playlist = null; // Clear playlist when playing single source
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       isPlayerActive.value = true;
     });
-    await audioPlayer.setAudioSource(audioSource);
+    await audioPlayer.setAudioSource(audioSource!);
+  }
+
+  Future<void> setAudioPlaylist(List<AudioSource> sources, int initialIndex) async {
+    playlist = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      children: sources,
+    );
+    
+    if (sources.isNotEmpty && initialIndex >= 0 && initialIndex < sources.length) {
+       currentMediaItem = (sources[initialIndex] as IndexedAudioSource).tag as MediaItem?;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      isPlayerActive.value = true;
+    });
+    
+    await audioPlayer.setAudioSource(playlist!, initialIndex: initialIndex, initialPosition: Duration.zero);
+  }
+
+  Future<void> playNext() async {
+    if (audioPlayer.hasNext) {
+      await audioPlayer.seekToNext();
+    }
+  }
+
+  Future<void> playPrevious() async {
+    if (audioPlayer.hasPrevious) {
+      await audioPlayer.seekToPrevious();
+    }
+  }
+
+  Future<void> moveQueueItem(int oldIndex, int newIndex) async {
+    if (playlist != null) {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      await playlist!.move(oldIndex, newIndex);
+    }
   }
 
   Future<void> play() async {
