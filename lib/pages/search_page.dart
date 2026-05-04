@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../apis/firestore_service_api.dart';
 import '../components/utils.dart';
@@ -18,7 +19,6 @@ import '../models/youtubemodels/youtube_playlist_item_model.dart';
 import '../models/youtubemodels/youtube_playlist_model.dart';
 import '../routes/routes.dart';
 import '../widgets/common/loading_widget.dart';
-import '../widgets/icons/boxed_icon_widget.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -29,7 +29,7 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _searchHistory = [];
+  List<String> _searchHistory = [];
   String _searchText = "";
 
   /// Cached content = playlists + items + highlights + liveTv + radio
@@ -54,7 +54,34 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
+    _loadSearchHistory();
     _loadAllCachedContent();
+  }
+
+  Future<void> _loadSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _searchHistory = prefs.getStringList('search_history') ?? [];
+    });
+  }
+
+  Future<void> _saveSearchHistory(String term) async {
+    if (term.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _searchHistory.remove(term);
+      _searchHistory.insert(0, term);
+      if (_searchHistory.length > 20) _searchHistory.removeLast();
+    });
+    await prefs.setStringList('search_history', _searchHistory);
+  }
+
+  Future<void> _deleteSearchHistory(String term) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _searchHistory.remove(term);
+    });
+    await prefs.setStringList('search_history', _searchHistory);
   }
 
   Future<void> _loadAllCachedContent() async {
@@ -138,31 +165,32 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildSearchInput(BuildContext context) {
     return SizedBox(
-      height: 40,
+      height: 44,
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() => _searchText = value),
+        onSubmitted: (value) => _saveSearchHistory(value),
         style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
         decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           hintText: AppConstants.searchContent,
-          hintStyle: const TextStyle(color: Colors.grey),
-          prefixIcon: const Icon(CupertinoIcons.search, color: Colors.grey),
+          hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.6)),
+          prefixIcon: Icon(CupertinoIcons.search, color: Colors.grey.withValues(alpha: 0.6), size: 20),
           suffixIcon: _searchText.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear, color: Colors.grey),
-            onPressed: () {
-              setState(() {
-                _searchController.clear();
-                _searchText = "";
-              });
-            },
-          )
+                  icon: const Icon(CupertinoIcons.clear_circled_solid, color: Colors.grey, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      _searchController.clear();
+                      _searchText = "";
+                    });
+                  },
+                )
               : null,
           filled: true,
-          fillColor: Theme.of(context).colorScheme.secondary,
+          fillColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(22),
             borderSide: BorderSide.none,
           ),
         ),
@@ -186,38 +214,61 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildResultTile(dynamic item) {
     return GestureDetector(
-      onTap: () => _openItem(item),
-      child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 10,
-          left: AppConstants.leftMain,
-          right: 8,
+      onTap: () {
+        _saveSearchHistory(_searchText);
+        _openItem(item);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12, left: 12, right: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Row(
-            children: [
-              _buildThumbnail(item),
-              const SizedBox(width: 12),
-              _buildTextSection(item),
-            ],
-          ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildThumbnail(item),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: _buildTextSection(item),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildThumbnail(item) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: CachedNetworkImage(
-        imageUrl: getItemThumbnail(item),
-        fit: BoxFit.cover,
-        width: Utils.calculateWidth(context, 0.36),
-        height: Utils.calculateHeight(context, 0.094),
-        placeholder: (_, __) => const LoadingWidget(),
-        errorWidget: (_, __, ___) => const Icon(Icons.error),
-      ),
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
+          child: CachedNetworkImage(
+            imageUrl: getItemThumbnail(item),
+            fit: BoxFit.cover,
+            width: 130,
+            height: 90,
+            placeholder: (_, __) => const SizedBox(width: 130, height: 90, child: LoadingWidget()),
+            errorWidget: (_, __, ___) => Container(width: 130, height: 90, color: Colors.grey.withValues(alpha: 0.2), child: const Icon(Icons.error)),
+          ),
+        ),
+        if (item is YouTubePlaylistItemModel)
+          Positioned.fill(
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.play_arrow_solid, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -225,15 +276,17 @@ class _SearchPageState extends State<SearchPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: Utils.calculateWidth(context, 0.52),
-          child: TextOverlay(
-            label: getItemTitle(item),
+        Text(
+          getItemTitle(item),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
-            fontSize: Utils.calculateWidth(context, 0.042),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         _buildMeta(item),
       ],
     );
@@ -241,58 +294,55 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildMeta(dynamic item) {
     if (item is YoutubePlaylistModel) {
-      // Playlist → show itemCount with folder
       return Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.tertiaryContainer,
+          color: Colors.amber.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(4),
         ),
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset(
-              'assets/icon/folder.svg',
-              width: 20,
-            ),
-            const SizedBox(width: 5),
+            const Icon(CupertinoIcons.folder_fill, size: 12, color: Colors.amber),
+            const SizedBox(width: 4),
             Text(
-              item.itemCount.toString(),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSecondary,
-                fontSize: 14,
+              "${item.itemCount} videos",
+              style: const TextStyle(
+                color: Colors.amber,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
               ),
             )
           ],
         ),
       );
     } else if (item is YouTubePlaylistItemModel) {
-      // Playlist item → show duration without container
       return Text(
         item.duration,
         style: TextStyle(
-          color: Theme.of(context).colorScheme.onPrimary,
+          color: Theme.of(context).colorScheme.onSecondary,
           fontSize: 12,
         ),
       );
     } else if (item is LiveTvModel || item is RadioModel) {
-      // Live TV or Radio → show LIVE in red container
       return Container(
         decoration: BoxDecoration(
-          color: Colors.red,
+          color: Colors.redAccent,
           borderRadius: BorderRadius.circular(4),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: const Text(
-          AppConstants.live,
+          "LIVE",
           style: TextStyle(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
           ),
         ),
       );
-    } else {
-      return const SizedBox.shrink();
     }
+    return const SizedBox.shrink();
   }
 
   Widget _buildSearchHistory() {
@@ -302,195 +352,137 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
-    return ListView(
-      children: _searchHistory.map((term) {
+    return ListView.builder(
+      itemCount: _searchHistory.length,
+      itemBuilder: (context, index) {
+        final term = _searchHistory[index];
         return ListTile(
-          leading: const Icon(Icons.history, color: Colors.grey),
-          title: Text(term),
+          leading: const Icon(CupertinoIcons.time, color: Colors.grey),
+          title: Text(term, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+          trailing: IconButton(
+            icon: const Icon(CupertinoIcons.clear, color: Colors.grey, size: 18),
+            onPressed: () => _deleteSearchHistory(term),
+          ),
           onTap: () {
             _searchController.text = term;
             setState(() => _searchText = term);
+            _saveSearchHistory(term);
           },
         );
-      }).toList(),
+      },
     );
   }
 
   Widget _buildCategoryChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-      child: Row(
-        children: _categories.map((category) {
-          final bool isSelected = _selectedCategory == category;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                _showCategoryBottomSheet(category);   // Open sheet
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.amber : Theme.of(context).colorScheme.secondary,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: isSelected
-                      ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.20),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                      : [],
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      category,
-                      style: TextStyle(
-                        color: isSelected ? Colors.black54 : Theme.of(context).colorScheme.onSecondary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Main Categories
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: _categories.map((category) {
+              final bool isSelected = _selectedCategory == category;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (_selectedCategory == category) {
+                        _selectedCategory = null;
+                        _selectedSubCategory = null;
+                      } else {
+                        _selectedCategory = category;
+                        _selectedSubCategory = null;
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.amber : Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? Colors.amber : Colors.transparent,
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: isSelected ? Colors.black54 : Theme.of(context).colorScheme.onSecondary,
-                      size: 22,
+                    child: Text(
+                      category,
+                      style: TextStyle(
+                        color: isSelected ? Colors.black : Theme.of(context).colorScheme.onSecondary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
                     ),
-                  ],
+                  ),
                 ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        // Sub Categories
+        if (_selectedCategory != null && _getSubCategories(_selectedCategory!).isNotEmpty)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: _getSubCategories(_selectedCategory!).map((subCat) {
+                  final bool isSelected = _selectedSubCategory == subCat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_selectedSubCategory == subCat) {
+                            _selectedSubCategory = null;
+                          } else {
+                            _selectedSubCategory = subCat;
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          subCat,
+                          style: TextStyle(
+                            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+      ],
     );
   }
 
-  void _showCategoryBottomSheet(String category) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        List<String> options = [];
-
-        switch (category) {
-          case "Playlist":
-            options = [
-              AppConstants.avventoKidsChannel,
-              AppConstants.avventoMusicChannel,
-              AppConstants.avventoMainChannel
-            ];
-            break;
-
-          case "Video":
-            options = [
-              AppConstants.avventoKidsChannel,
-              AppConstants.avventoMusicChannel,
-              AppConstants.avventoMainChannel
-            ];
-            break;
-
-          case "Live":
-            options = ["TV", "Radio"];
-            break;
-        }
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Title: Category selected
-                  Text(
-                    category,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  Row(
-                    children: [
-                      // Clear button
-                      if (_selectedSubCategory != null)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedSubCategory = null;
-                              _selectedCategory = null; // Clear chip highlight
-                            });
-                            Get.back();
-                          },
-                          child: const Text(
-                            "Clear",
-                            style: TextStyle(
-                              color: Colors.amber,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(width: 20),
-
-                      // Exit button (X)
-                      GestureDetector(
-                        onTap: () =>  Get.back(),
-                        child: BoxedIcon(
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          icon: Icons.close_rounded,
-                          borderRadius: 20,
-                          iconColor: Theme.of(context).colorScheme.onSecondary,
-                        ),
-                      )
-                    ],
-                  )
-                ],
-              ),
-            ),
-
-            // RADIO OPTIONS
-            ListView(
-              shrinkWrap: true,
-              children: options.map((option) {
-                return RadioListTile<String>(
-                  title: TextOverlay(label: option, color: Theme.of(context).colorScheme.onPrimary),
-                  activeColor: Colors.amber,
-                  fillColor: WidgetStateProperty.resolveWith<Color>(
-                        (states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return Colors.amber;            // selected ring
-                      }
-                      return Colors.grey;               // unselected ring (inactive)
-                    },
-                  ),
-                  value: option,
-                  groupValue: _selectedSubCategory,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = category; // highlight chip
-                      _selectedSubCategory = value;
-                    });
-                    Get.back();
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        );
-      },
-    );
+  List<String> _getSubCategories(String category) {
+    switch (category) {
+      case "Playlist":
+      case "Video":
+        return [AppConstants.avventoKidsChannel, AppConstants.avventoMusicChannel, AppConstants.avventoMainChannel];
+      case "Live":
+        return ["TV", "Radio"];
+      default:
+        return [];
+    }
   }
 
   // ---------------- LOGIC ----------------
@@ -544,26 +536,34 @@ class _SearchPageState extends State<SearchPage> {
             .contains(_searchText.toLowerCase()))
         .toList();
 
-    if (_selectedSubCategory == null) return filtered;
+    if (_selectedCategory != null) {
+      if (_selectedCategory == "Playlist") {
+        filtered = filtered.whereType<YoutubePlaylistModel>().toList();
+      } else if (_selectedCategory == "Video") {
+        filtered = filtered.whereType<YouTubePlaylistItemModel>().toList();
+      } else if (_selectedCategory == "Live") {
+        filtered = filtered.where((item) => item is LiveTvModel || item is RadioModel).toList();
+      }
+    }
 
-    switch (_selectedSubCategory) {
-      case "TV":
-        filtered = filtered.whereType<LiveTvModel>().toList();
-        break;
-
-      case "Radio":
-        filtered = filtered.whereType<RadioModel>().toList();
-        break;
-
-      case AppConstants.avventoKidsChannel:
-      case AppConstants.avventoMusicChannel:
-      case AppConstants.avventoMainChannel:
-        filtered = filtered.where((item) =>
-        (item is YoutubePlaylistModel &&
-            item.channelName == _selectedSubCategory) ||
-            (item is YouTubePlaylistItemModel &&
-                item.channelName == _selectedSubCategory)).toList();
-        break;
+    if (_selectedSubCategory != null) {
+      switch (_selectedSubCategory) {
+        case "TV":
+          filtered = filtered.whereType<LiveTvModel>().toList();
+          break;
+        case "Radio":
+          filtered = filtered.whereType<RadioModel>().toList();
+          break;
+        case AppConstants.avventoKidsChannel:
+        case AppConstants.avventoMusicChannel:
+        case AppConstants.avventoMainChannel:
+          filtered = filtered.where((item) {
+            if (item is YoutubePlaylistModel) return item.channelName == _selectedSubCategory;
+            if (item is YouTubePlaylistItemModel) return item.channelName == _selectedSubCategory;
+            return false;
+          }).toList();
+          break;
+      }
     }
 
     return filtered;
