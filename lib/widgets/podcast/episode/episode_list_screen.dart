@@ -42,19 +42,17 @@ class _EpisodeListState extends State<EpisodeListScreen> {
         if (podcastProvider.podcastEpisodes.isEmpty) {
           return const LoadingWidget();
         } else {
-          return GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: Utils.calculateHeight(context, 0.00077),
-              mainAxisExtent: Utils.calculateHeight(context, 0.38),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: podcastProvider.podcastEpisodes.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (BuildContext context, int index) {
+                return buildRadioPodcastDetailsScreen(podcastProvider.podcastEpisodes[index]);
+              },
             ),
-            itemCount: podcastProvider.podcastEpisodes.length,
-            semanticChildCount: 2,
-            itemBuilder: (BuildContext context, int index) {
-              return  buildRadioPodcastDetailsScreen(podcastProvider.podcastEpisodes[index]);
-            },
           );
         }
       },

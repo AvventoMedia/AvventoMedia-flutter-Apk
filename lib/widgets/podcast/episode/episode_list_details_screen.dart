@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:avvento_media/components/utils.dart';
 import 'package:avvento_media/models/radiomodel/podcast_episode_model.dart';
 import 'package:avvento_media/widgets/common/loading_widget.dart';
@@ -20,17 +22,26 @@ class EpisodeListDetailsWidget extends StatefulWidget {
 }
 
 class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
+  StreamSubscription? _playerStateSubscription;
 
   @override
   void initState() {
     super.initState();
-    widget.audioPlayerController.audioPlayer.playerStateStream.listen((_) {
+    _playerStateSubscription = widget.audioPlayerController.audioPlayer.playerStateStream.listen((_) {
       _updatePlayingState();
     });
   }
 
   void _updatePlayingState() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _playerStateSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -38,82 +49,110 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
     String publishedDate = Jiffy.parse(Utils.formatTimestamp(timestamp: widget.episode.publishedAt, format: 'yyyy-MM-dd HH:mm:ss',)).fromNow();
     String? azuracastAPIKey = dotenv.env["AZURACAST_APIKEY"];
 
-   return Center(
+    bool isSelected = widget.audioPlayerController.currentMediaItem?.id == widget.episode.id;
+    bool isPlayingAudio = isSelected && widget.audioPlayerController.audioPlayer.playing;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: isSelected ? Colors.amber.withValues(alpha: 0.5) : Colors.transparent,
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0, left: 8.0,right: 8.0,top: 8),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child:Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.episode.art,
-                      httpHeaders: {
-                        'Authorization': 'Bearer $azuracastAPIKey',
-                      },
-                      fit: BoxFit.cover,
-                      width: Utils.calculateWidth(context, 0.44),
-                      height:  Utils.calculateHeight(context, 0.2),
-                      placeholder: (context, url) => Center(
-                        child: SizedBox(
-                            width:  Utils.calculateWidth(context, 0.3),
-                            height:  Utils.calculateWidth(context, 0.3),
-                            child: const LoadingWidget()
-                        ),
-                      ),
-                      errorWidget: (context, _, error) => Icon(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Thumbnail
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10.0),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.episode.art,
+                    httpHeaders: {
+                      'Authorization': 'Bearer $azuracastAPIKey',
+                    },
+                    fit: BoxFit.cover,
+                    width: 80,
+                    height: 80,
+                    placeholder: (context, url) => Container(
+                      width: 80,
+                      height: 80,
+                      color: Theme.of(context).colorScheme.surface,
+                      child: const Center(child: LoadingWidget()),
+                    ),
+                    errorWidget: (context, _, error) => Container(
+                      width: 80,
+                      height: 80,
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Icon(
                         Icons.error,
                         color: Theme.of(context).colorScheme.error,
                       ),
                     ),
                   ),
-                  widget.audioPlayerController.currentMediaItem?.id == widget.episode.id ? Positioned(
-                    top: -25.0,
-                    right: -18.0,
-                    child:  AudioIndicator(isPlaying: widget.audioPlayerController.audioPlayer.playing,),
-                  ) :  const SizedBox.shrink(),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Column(
+                ),
+                if (isPlayingAudio)
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Center(
+                      child: AudioIndicator(isPlaying: true),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            // Text Details
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: Utils.calculateWidth(context,0.44),
-                    child: TextOverlay(
-                      label: widget.episode.title,
-                      fontWeight: FontWeight.bold,
-                      color:  widget.audioPlayerController.currentMediaItem?.id == widget.episode.id ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
-                      fontSize: Utils.calculateWidth(context,0.042),
-                    ),
+                  TextOverlay(
+                    label: widget.episode.title,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 15,
+                    maxLines: 2,
                   ),
-                  const SizedBox(height: 3),
-                  SizedBox(
-                    width: Utils.calculateWidth(context,0.44),
-                    child: TextOverlay(
-                      label: widget.episode.playlistMediaArtist,
-                      fontSize: 14,
-                      color: widget.audioPlayerController.currentMediaItem?.id == widget.episode.id ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  const SizedBox(height: 4),
+                  TextOverlay(
+                    label: widget.episode.playlistMediaArtist,
+                    fontSize: 13,
+                    maxLines: 1,
+                    color: Theme.of(context).colorScheme.onSecondary,
                   ),
-                  const SizedBox(height: 1),
-                  SizedBox(
-                    width: Utils.calculateWidth(context,0.44),
-                    child: TextOverlay(
-                      label: "Published $publishedDate",
-                      fontSize: 11,
-                      maxLines: 1,
-                      color: widget.audioPlayerController.currentMediaItem?.id == widget.episode.id ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  const SizedBox(height: 6),
+                  TextOverlay(
+                    label: "Published $publishedDate",
+                    fontSize: 11,
+                    maxLines: 1,
+                    color: Theme.of(context).colorScheme.onSecondary.withValues(alpha: 0.7),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            // Play icon indicator
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, right: 4.0),
+              child: Icon(
+                isPlayingAudio ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                color: isSelected ? Colors.amber : Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                size: 32,
+              ),
+            ),
+          ],
         ),
       ),
     );
