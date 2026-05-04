@@ -356,7 +356,7 @@ class PodcastPageState extends State<PodcastPage> {
                             ],
                           ),
                           SizedBox(height: Utils.calculateHeight(context, 0.04),),
-                          TextOverlay(label: AppConstants.avventoSlogan,color: Theme.of(context).colorScheme.onSecondaryContainer),
+                          TextOverlay(label: AppConstants.avventoSlogan, color: Theme.of(context).colorScheme.onSecondaryContainer),
                           SizedBox(height: Utils.calculateHeight(context, 0.02),),
                         ],
                       );
