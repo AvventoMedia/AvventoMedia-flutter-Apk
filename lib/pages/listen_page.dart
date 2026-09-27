@@ -5,7 +5,8 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_constants.dart';
-import '../routes/routes.dart';
+import '../controller/audio_player_controller.dart';
+import 'package:miniplayer/miniplayer.dart';
 import '../widgets/providers/programs_provider.dart';
 import '../widgets/providers/radio_podcast_provider.dart';
 import '../widgets/text/label_place_holder.dart';
@@ -81,7 +82,13 @@ class ListenPageState extends State<ListenPage> {
                   child: IconButton(
                     icon: const Icon(CupertinoIcons.antenna_radiowaves_left_right, size: 20),
                     onPressed: () {
-                      Get.toNamed(Routes.getOnlineRadioRoute());
+                      final audioController = Get.find<AudioPlayerController>();
+                      audioController.isLive.value = true;
+                      audioController.isPlayerActive.value = true;
+                      audioController.isMiniPlayerVisible.value = true;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        audioController.miniplayerController.animateToHeight(state: PanelState.MAX);
+                      });
                     },
                   ),
                 ),
@@ -99,7 +106,13 @@ class ListenPageState extends State<ListenPage> {
                     ),
                     child: GestureDetector(
                       onTap: () {
-                        Get.toNamed(Routes.getOnlineRadioRoute());
+                        final audioController = Get.find<AudioPlayerController>();
+                        audioController.isLive.value = true;
+                        audioController.isPlayerActive.value = true;
+                        audioController.isMiniPlayerVisible.value = true;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          audioController.miniplayerController.animateToHeight(state: PanelState.MAX);
+                        });
                       },
                       child: Container(
                         width: double.infinity,

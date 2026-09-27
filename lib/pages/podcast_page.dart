@@ -53,7 +53,6 @@ class PodcastPageState extends State<PodcastPage> {
     // Defer reactive updates to after the build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _audioPlayerController.isLive.value = false;
-      _audioPlayerController.hideMiniPlayer(); // Hide on player page
     });
 
     // The playlist was already set by EpisodeListScreen before navigation.
@@ -74,7 +73,6 @@ class PodcastPageState extends State<PodcastPage> {
 
   @override
   void dispose() {
-    _audioPlayerController.showMiniPlayer();
     _musicPlayerPositionController.close();
     super.dispose();
   }

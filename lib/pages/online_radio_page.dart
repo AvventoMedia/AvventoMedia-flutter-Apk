@@ -46,7 +46,6 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
     // Defer reactive updates to after the build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _audioPlayerController.isLive.value = true;
-      _audioPlayerController.hideMiniPlayer(); // Hide on player page
     });
   }
 
