@@ -15,7 +15,16 @@ import '../../text/text_overlay_widget.dart';
 class EpisodeListDetailsWidget extends StatefulWidget {
   final PodcastEpisode episode;
   final AudioPlayerController audioPlayerController;
-  const EpisodeListDetailsWidget({super.key, required this.episode, required this.audioPlayerController});
+
+  /// Called when the user taps the play/pause icon — does NOT expand the panel.
+  final VoidCallback? onPlayTap;
+
+  const EpisodeListDetailsWidget({
+    super.key,
+    required this.episode,
+    required this.audioPlayerController,
+    this.onPlayTap,
+  });
 
   @override
   EpisodePlayerWidgetState createState() => EpisodePlayerWidgetState();
@@ -27,15 +36,13 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
   @override
   void initState() {
     super.initState();
-    _playerStateSubscription = widget.audioPlayerController.audioPlayer.playerStateStream.listen((_) {
-      _updatePlayingState();
-    });
+    _playerStateSubscription = widget
+        .audioPlayerController.audioPlayer.playerStateStream
+        .listen((_) => _updatePlayingState());
   }
 
   void _updatePlayingState() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -46,19 +53,29 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String publishedDate = Jiffy.parse(Utils.formatTimestamp(timestamp: widget.episode.publishedAt, format: 'yyyy-MM-dd HH:mm:ss',)).fromNow();
-    String? azuracastAPIKey = dotenv.env["AZURACAST_APIKEY"];
+    final String publishedDate = Jiffy.parse(Utils.formatTimestamp(
+            timestamp: widget.episode.publishedAt,
+            format: 'yyyy-MM-dd HH:mm:ss'))
+        .fromNow();
+    final String? azuracastAPIKey = dotenv.env["AZURACAST_APIKEY"];
 
-    bool isSelected = widget.audioPlayerController.currentMediaItem?.id == widget.episode.id;
-    bool isPlayingAudio = isSelected && widget.audioPlayerController.audioPlayer.playing;
+    final bool isSelected =
+        widget.audioPlayerController.currentMediaItem?.id == widget.episode.id;
+    final bool isPlayingAudio =
+        isSelected && widget.audioPlayerController.audioPlayer.playing;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+        color: Theme.of(context)
+            .colorScheme
+            .secondary
+            .withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: isSelected ? Colors.amber.withValues(alpha: 0.5) : Colors.transparent,
+          color: isSelected
+              ? Colors.amber.withValues(alpha: 0.5)
+              : Colors.transparent,
           width: 1,
         ),
       ),
@@ -113,7 +130,8 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
               ],
             ),
             const SizedBox(width: 16),
-            // Text Details
+
+            // Text details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +140,9 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
                   TextOverlay(
                     label: widget.episode.title,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.amber : Theme.of(context).colorScheme.onPrimary,
+                    color: isSelected
+                        ? Colors.amber
+                        : Theme.of(context).colorScheme.onPrimary,
                     fontSize: 15,
                     maxLines: 2,
                   ),
@@ -138,18 +158,38 @@ class EpisodePlayerWidgetState extends State<EpisodeListDetailsWidget> {
                     label: "Published $publishedDate",
                     fontSize: 11,
                     maxLines: 1,
-                    color: Theme.of(context).colorScheme.onSecondary.withValues(alpha: 0.7),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSecondary
+                        .withValues(alpha: 0.7),
                   ),
                 ],
               ),
             ),
-            // Play icon indicator
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, right: 4.0),
-              child: Icon(
-                isPlayingAudio ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
-                color: isSelected ? Colors.orange : Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
-                size: 32,
+
+            // Play / Pause icon — GestureDetector stops tap from bubbling
+            // to the parent card's onTap (which expands the full player).
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                // Absorb the tap so card onTap is NOT triggered.
+                // Then call the play callback.
+                widget.onPlayTap?.call();
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 4.0),
+                child: Icon(
+                  isPlayingAudio
+                      ? Icons.pause_circle_filled_rounded
+                      : Icons.play_circle_fill_rounded,
+                  color: isSelected
+                      ? Colors.orange
+                      : Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.6),
+                  size: 36,
+                ),
               ),
             ),
           ],

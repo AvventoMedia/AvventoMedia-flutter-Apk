@@ -36,6 +36,8 @@ class _WatchPageState extends State<WatchPage> {
       liveTvController.selectedTv.value!.streamUrl,
       videoFormat: BetterPlayerVideoFormat.hls,
       liveStream: true,
+      // Disable HLS embedded CC / subtitle tracks entirely
+      useAsmsSubtitles: false,
       drmConfiguration: BetterPlayerDrmConfiguration(
         drmType: BetterPlayerDrmType.token,
         token: "Bearer=token",
@@ -43,21 +45,21 @@ class _WatchPageState extends State<WatchPage> {
     );
     _betterPlayerController = BetterPlayerController(
         BetterPlayerConfiguration(
-          // placeholder: imagePlaceHolder(context, liveTvController.selectedTv.value!.imageUrl),
           autoPlay: true,
           allowedScreenSleep: false,
           expandToFill: false,
           fit: BoxFit.fitHeight,
           controlsConfiguration: BetterPlayerControlsConfiguration(
             showControlsOnInitialize: true,
+            // Hide subtitle UI controls AND disable auto-selection
             enableSubtitles: false,
+            enableAudioTracks: false,
             enablePlayPause: true,
             enableOverflowMenu: true,
             enablePip: true,
             playerTheme: BetterPlayerTheme.material,
             loadingWidget: const LoadingWidget(),
             overflowMenuCustomItems: [
-              // Add PiP option only for Android
               if (Platform.isAndroid)
                 BetterPlayerOverflowMenuItem(
                   Icons.picture_in_picture_alt_rounded,

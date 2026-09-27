@@ -1,5 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:miniplayer/miniplayer.dart';
 
+import '../controller/audio_player_controller.dart';
 import '../controller/podcast_controller.dart';
 import '../controller/podcast_episode_controller.dart';
 import '../controller/youtube_playlist_controller.dart';
@@ -54,7 +57,13 @@ class LibraryNavigation {
         media: item.url ?? '',
       );
       Get.find<PodcastEpisodeController>().setSelectedEpisode(model);
-      Get.toNamed(Routes.getPodcastRoute());
+      final audioController = Get.find<AudioPlayerController>();
+      audioController.isLive.value = false;
+      audioController.isPlayerActive.value = true;
+      audioController.isMiniPlayerVisible.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        audioController.miniplayerController.animateToHeight(state: PanelState.MAX);
+      });
     } else if (item.type == 'podcast_show') {
       final model = RadioPodcast(
         id: item.id,

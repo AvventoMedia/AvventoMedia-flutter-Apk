@@ -49,6 +49,7 @@ class _YoutubeWatchPageState extends State<YoutubeWatchPage> {
         loop: false,
         forceHD: true,
         enableCaption: false,
+        captionLanguage: 'none', // Force an invalid language so CC fails to load even if YT overrides enableCaption
         isLive: selected.liveBroadcastContent == 'live',
         useHybridComposition: true,
       ),
@@ -56,6 +57,14 @@ class _YoutubeWatchPageState extends State<YoutubeWatchPage> {
 
     // Allow immersive fullscreen when rotated
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    // Aggressively unload captions on state changes to prevent CC from popping up later
+    _controller.addListener(() {
+      if (isPlayerReady && _controller.value.playerState == PlayerState.playing) {
+        _controller.value.webViewController?.evaluateJavascript(
+            source: "try { player.unloadModule('captions'); } catch (e) {}");
+      }
+    });
 
     // Fetch related videos from the same playlist
     _fetchRelatedVideos();
@@ -138,6 +147,10 @@ class _YoutubeWatchPageState extends State<YoutubeWatchPage> {
             setState(() {
               isPlayerReady = true;
             });
+            // Forcefully unload the captions module via JS in the iFrame.
+            // This is the most bulletproof way to stop CC if YouTube ignores the flags.
+            _controller.value.webViewController?.evaluateJavascript(
+                source: "try { player.unloadModule('captions'); } catch (e) {}");
           },
           ),
             builder: (context, player) {

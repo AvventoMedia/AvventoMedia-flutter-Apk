@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:miniplayer/miniplayer.dart';
 import '../main.dart';
 import 'audio_handler.dart';
 
@@ -25,6 +26,16 @@ class AudioPlayerController extends GetxController {
 
   /// Tracks whether the player has an active media source
   final RxBool isPlayerActive = false.obs;
+
+  /// Controls the expand/collapse state of the sliding mini player panel
+  final MiniplayerController miniplayerController = MiniplayerController();
+
+  /// 0.0 = fully collapsed (mini bar), 1.0 = fully expanded (full player)
+  final RxDouble panelPercentage = 0.0.obs;
+
+  /// Tracks the currently active route name so the Miniplayer overlay knows
+  /// whether the BottomNavigationBar is visible (home route only).
+  final RxString currentRoute = '/'.obs;
 
   @override
   void onInit() {
@@ -87,14 +98,17 @@ class AudioPlayerController extends GetxController {
     );
 
     currentMediaItem = mediaItemTag;
-    playlist = null; // Clear playlist when playing single source
+    playlist = null;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      isPlayerActive.value = true;
-    });
-    // Set audio source normally
+    isPlayerActive.value = true;
+    isMiniPlayerVisible.value = true;
+
+    // Tell the handler this is live (no seek bar, no skip buttons)
+    if (audioHandler is MyAudioHandler) {
+      (audioHandler as MyAudioHandler).setLivePlayback(isLive.value);
+    }
+
     await audioPlayer.setAudioSource(audioSource!);
-    // Push initial media item to AudioHandler
     await audioHandler.updateMediaItem(mediaItemTag);
   }
 
@@ -103,16 +117,25 @@ class AudioPlayerController extends GetxController {
       useLazyPreparation: true,
       children: sources,
     );
-    
+
     if (sources.isNotEmpty && initialIndex >= 0 && initialIndex < sources.length) {
-       currentMediaItem = (sources[initialIndex] as IndexedAudioSource).tag as MediaItem?;
+      currentMediaItem =
+          (sources[initialIndex] as IndexedAudioSource).tag as MediaItem?;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      isPlayerActive.value = true;
-    });
-    
-    await audioPlayer.setAudioSource(playlist!, initialIndex: initialIndex, initialPosition: Duration.zero);
+    isPlayerActive.value = true;
+    isMiniPlayerVisible.value = true;
+
+    // Tell the handler this is a seekable playlist (show progress bar + skip)
+    if (audioHandler is MyAudioHandler) {
+      (audioHandler as MyAudioHandler).setLivePlayback(false);
+    }
+
+    await audioPlayer.setAudioSource(
+      playlist!,
+      initialIndex: initialIndex,
+      initialPosition: Duration.zero,
+    );
   }
 
   Future<void> playNext() async {

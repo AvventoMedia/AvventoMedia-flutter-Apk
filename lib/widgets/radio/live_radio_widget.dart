@@ -6,9 +6,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:miniplayer/miniplayer.dart';
 
 import '../../apis/firestore_service_api.dart';
-import '../../routes/routes.dart';
+import '../../controller/audio_player_controller.dart';
 
 class LiveRadioWidget extends StatefulWidget {
   const LiveRadioWidget({super.key});
@@ -51,7 +52,16 @@ class _LiveRadioWidget extends State<LiveRadioWidget> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppConstants.leftMain),
       child: GestureDetector(
-        onTap: () => Get.toNamed(Routes.getOnlineRadioRoute()),
+        onTap: () {
+          final audioController = Get.find<AudioPlayerController>();
+          audioController.isLive.value = true;
+          audioController.isPlayerActive.value = true;
+          audioController.isMiniPlayerVisible.value = true;
+          // Defer until the Miniplayer widget is in the tree
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            audioController.miniplayerController.animateToHeight(state: PanelState.MAX);
+          });
+        },
         child: Container(
           height: 100,
           decoration: BoxDecoration(

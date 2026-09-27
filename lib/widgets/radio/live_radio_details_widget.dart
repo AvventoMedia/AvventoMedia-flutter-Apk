@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../components/utils.dart';
-import '../../routes/routes.dart';
+import '../../controller/audio_player_controller.dart';
+import 'package:miniplayer/miniplayer.dart';
 import '../images/resizable_image_widget_2.dart';
 
 class LiveRadioDetailsWidget extends StatefulWidget {
@@ -21,7 +22,15 @@ class _LiveRadioDetailsWidget extends State<LiveRadioDetailsWidget> {
     return Padding(
       padding: const EdgeInsets.all(15),
       child: GestureDetector(
-        onTap: () => Get.toNamed(Routes.getOnlineRadioRoute()),
+        onTap: () {
+          final audioController = Get.find<AudioPlayerController>();
+          audioController.isLive.value = true;
+          audioController.isPlayerActive.value = true;
+          audioController.isMiniPlayerVisible.value = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            audioController.miniplayerController.animateToHeight(state: PanelState.MAX);
+          });
+        },
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
