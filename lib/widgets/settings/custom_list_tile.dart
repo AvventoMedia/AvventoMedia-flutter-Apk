@@ -1,10 +1,11 @@
 import 'package:avvento_media/widgets/text/text_overlay_widget.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomListTile extends StatefulWidget {
   final String label;
-  final IconData leadingIcon;
+  final dynamic leadingIcon;
   final bool isSwitch;
   final Function(bool)? onSwitchChanged;
   final VoidCallback? onTap;
@@ -33,7 +34,9 @@ class CustomListTileState extends State<CustomListTile> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(widget.leadingIcon, size: 30,color: Theme.of(context).colorScheme.onSecondaryContainer),
+      leading: widget.leadingIcon is IconData 
+          ? Icon(widget.leadingIcon, size: 30,color: Theme.of(context).colorScheme.onSecondaryContainer)
+          : FaIcon(widget.leadingIcon, size: 30,color: Theme.of(context).colorScheme.onSecondaryContainer),
       title: TextOverlay(
         label: widget.label,
         color: Theme.of(context).colorScheme.onPrimary,

@@ -62,9 +62,19 @@ class AudioPlayerController extends GetxController {
     );
   }
 
-  Future<void> updateRadioProgram(String newTitle) async {
+  Future<void> updateRadioProgram(String newTitle, String newArtist, String newImageUrl, Duration duration, Duration elapsed) async {
+    if (audioHandler is MyAudioHandler) {
+      (audioHandler as MyAudioHandler).setLivePlayback(isLive.value);
+      (audioHandler as MyAudioHandler).syncLiveProgress(elapsed);
+    }
+
     if (currentMediaItem != null) {
-      final updatedItem = currentMediaItem!.copyWith(title: newTitle);
+      final updatedItem = currentMediaItem!.copyWith(
+        title: newTitle,
+        artist: newArtist,
+        artUri: Uri.parse(newImageUrl),
+        duration: duration,
+      );
       currentMediaItem = updatedItem;
       await audioHandler.updateMediaItem(updatedItem);
     }
@@ -127,11 +137,18 @@ class AudioPlayerController extends GetxController {
   }
 
   Future<void> play() async {
+    if (isLive.value && audioPlayer.processingState == ProcessingState.idle && audioSource != null) {
+      await audioPlayer.setAudioSource(audioSource!);
+    }
     await audioPlayer.play();
   }
 
   Future<void> pause() async {
-    await audioPlayer.pause();
+    if (isLive.value) {
+      await audioPlayer.stop();
+    } else {
+      await audioPlayer.pause();
+    }
   }
 
   Future<void> stop() async {

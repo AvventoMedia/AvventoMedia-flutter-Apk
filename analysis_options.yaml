@@ -30,3 +30,11 @@ linter:
 analyzer:
   enable-experiment:
     - macros
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
