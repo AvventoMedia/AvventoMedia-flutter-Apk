@@ -67,8 +67,7 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
     _positionSubscription?.cancel();
     _positionSubscription = positionSubscription;
 
-    // Initialize or update other data as needed
-    _init(radioStationProvider);
+    // The Consumer in build() handles initializing the radio station provider.
   }
 
   Future<void> _init(RadioStationProvider radioProvider) async {
@@ -78,6 +77,7 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
         title: radioProvider.radioStation!.nowPlayingTitle,
         artist: radioProvider.radioStation!.artist,
         artUri: Uri.parse(radioProvider.radioStation!.imageUrl),
+        duration: Utils.parseDuration(radioProvider.radioStation!.duration),
       );
 
       // Update _nextProgram ONLY IF new data is not empty
@@ -92,7 +92,13 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
         );
       } else {
         // Dynamically update the notification if the radio is already playing
-        _audioPlayerController.updateRadioProgram(radioProvider.radioStation!.nowPlayingTitle);
+        _audioPlayerController.updateRadioProgram(
+          radioProvider.radioStation!.nowPlayingTitle,
+          radioProvider.radioStation!.artist,
+          radioProvider.radioStation!.imageUrl,
+          Utils.parseDuration(radioProvider.radioStation!.duration),
+          Utils.parseDuration(radioProvider.radioStation!.elapsed),
+        );
       }
     }
   }
@@ -108,11 +114,12 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
   }
 
 
+  bool _isInitialized = false;
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    _init(radioStationProvider);
     return Scaffold(
       backgroundColor:   Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -156,7 +163,19 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
           if (radioProvider.radioStation == null) {
             return const LoadingWidget();
           } else {
-            _init(radioProvider);
+            if (!_isInitialized) {
+              _isInitialized = true;
+              _init(radioProvider);
+            } else {
+              // Dynamically update the metadata on every tick
+              _audioPlayerController.updateRadioProgram(
+                radioProvider.radioStation!.nowPlayingTitle,
+                radioProvider.radioStation!.artist,
+                radioProvider.radioStation!.imageUrl,
+                Utils.parseDuration(radioProvider.radioStation!.duration),
+                Utils.parseDuration(radioProvider.radioStation!.elapsed),
+              );
+            }
             return SingleChildScrollView(
               child: Column(
                 children: [
@@ -255,17 +274,20 @@ class _OnlineRadioPageState extends State<OnlineRadioPage> {
                           ),
                           Padding(
                             padding: EdgeInsets.only(left: paddingWidth , right: paddingWidth, top: paddingTop),
-                            child: ProgressBar(
-                              baseBarColor: Colors.grey[600],
-                              bufferedBarColor: Colors.grey,
-                              thumbColor: Colors.redAccent,
-                              thumbRadius: 5,
-                              buffered: Utils.parseDuration(radioProvider.radioStation?.elapsed),
-                              progressBarColor: Colors.redAccent,
-                              progress: Utils.parseDuration(radioProvider.radioStation?.elapsed),
-                              timeLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
-                              total: Utils.parseDuration(radioProvider.radioStation?.duration),
-                             ),
+                            child: IgnorePointer(
+                              child: ProgressBar(
+                                baseBarColor: Colors.grey[600],
+                                bufferedBarColor: Colors.grey,
+                                thumbColor: Colors.transparent,
+                                thumbGlowRadius: 0,
+                                thumbRadius: 0,
+                                buffered: Utils.parseDuration(radioProvider.radioStation?.elapsed),
+                                progressBarColor: Colors.redAccent,
+                                progress: Utils.parseDuration(radioProvider.radioStation?.elapsed),
+                                timeLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                                total: Utils.parseDuration(radioProvider.radioStation?.duration),
+                               ),
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),

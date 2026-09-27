@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 
 import '../../apis/azuracast_api.dart';
@@ -22,17 +23,42 @@ class RadioStationProvider extends ChangeNotifier {
     AzuraCastAPI.sendInitialMessage();
   }
 
+  Timer? _elapsedTimer;
+
   void fetchRadioStationUpdates() {
     AzuraCastAPI.getRadioStationUpdates().listen((updatedRadioStation) {
       _radioStation = updatedRadioStation;
+      _startElapsedTimer();
       notifyListeners(); // Notify listeners of changes
     }, onError: (error) {
       throw error;
     });
   }
 
+  void _startElapsedTimer() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_radioStation != null) {
+        if (_radioStation!.elapsed < _radioStation!.duration) {
+          _radioStation = RadioStation(
+            id: _radioStation!.id,
+            artist: _radioStation!.artist,
+            imageUrl: _radioStation!.imageUrl,
+            nowPlayingTitle: _radioStation!.nowPlayingTitle,
+            streamUrl: _radioStation!.streamUrl,
+            duration: _radioStation!.duration,
+            elapsed: _radioStation!.elapsed + 1,
+            nextProgram: _radioStation!.nextProgram,
+          );
+          notifyListeners();
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _elapsedTimer?.cancel();
     AzuraCastAPI.closeWebsocketConnection();
     super.dispose();
   }

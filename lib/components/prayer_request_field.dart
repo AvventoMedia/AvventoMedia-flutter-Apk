@@ -168,7 +168,7 @@ class PrayerRequestFieldState extends State<PrayerRequestField> {
               hoverColor: Theme.of(context).colorScheme.onPrimary,
               filled: true,
               fillColor: Theme.of(context).colorScheme.secondary,
-              prefixIcon: Icon(
+              prefixIcon: FaIcon(
                 FontAwesomeIcons.personPraying,
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
@@ -205,7 +205,7 @@ class PrayerRequestFieldState extends State<PrayerRequestField> {
               fillColor: Theme.of(context).colorScheme.secondary,
               prefixIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 90),
-                  child: Icon(
+                  child: FaIcon(
                     FontAwesomeIcons.message,
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
